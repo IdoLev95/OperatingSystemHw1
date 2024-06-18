@@ -56,7 +56,7 @@ walkInfo perform_page_walk(uint64_t pt, uint64_t vpn)
     }
     result.ppn = currPt  >> 12;
     result.isValid = true;
-    result.indWalk = MaxWalk;
+    result.indWalk = MaxWalk - 1;
     return result;
 }
 
@@ -74,16 +74,14 @@ void page_table_update(uint64_t pt, uint64_t vpn, uint64_t ppn)
     }
     else
     {
-        if(!walkInfo.isValid)
-        {   uint64_t* pt_as_va_ptr = walkInfo.before_the_last_pt;
-            for(uint8_t indwalk = walkInfo.indWalk; indwalk < MaxWalk;indwalk++)
-            {
-                if( indwalk > walkInfo.indWalk)
-                    pt_as_va_ptr += (vpn >> 9 *(MaxWalk - indwalk - 1)) & 0x1FF;
+        uint64_t* pt_as_va_ptr = walkInfo.before_the_last_pt;
+        for(uint8_t indwalk = walkInfo.indWalk; indwalk < MaxWalk;indwalk++)
+        {
+            if( indwalk > walkInfo.indWalk)
+                pt_as_va_ptr += (vpn >> 9 *(MaxWalk - indwalk - 1)) & 0x1FF;
 
-                *pt_as_va_ptr =indwalk<MaxWalk -1 ? ((alloc_page_frame()) << 12) + 0x1 : (ppn <<12) + 0x1;
-                pt_as_va_ptr = (uint64_t*)phys_to_virt(*pt_as_va_ptr - 0x1);
-            }
+            *pt_as_va_ptr =indwalk<MaxWalk -1 ? ((alloc_page_frame()) << 12) + 0x1 : (ppn <<12) + 0x1;
+            pt_as_va_ptr = (uint64_t*)phys_to_virt(*pt_as_va_ptr - 0x1);
         }
     }
 }
